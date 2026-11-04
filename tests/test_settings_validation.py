@@ -50,3 +50,23 @@ async def test_settings_accept_valid_updates(async_client: AsyncClient):
     assert data["work_start"] == "09:00"
     assert data["work_end"] == "18:00"
     assert data["timezone_offset"] == "+05:00"
+    assert data["timezone_name"] is None
+
+
+@pytest.mark.asyncio
+async def test_settings_accept_iana_timezone(async_client: AsyncClient):
+    resp = await async_client.put(
+        "/api/v1/settings",
+        json={"timezone_name": "Europe/London"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["timezone_name"] == "Europe/London"
+
+
+@pytest.mark.asyncio
+async def test_settings_reject_unknown_iana_timezone(async_client: AsyncClient):
+    resp = await async_client.put(
+        "/api/v1/settings",
+        json={"timezone_name": "Europe/NotARealPlace"},
+    )
+    assert resp.status_code == 422

@@ -245,6 +245,14 @@ LOG_LEVEL=INFO
 > 3. Change `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD`.
 > 4. After first login, change the admin password via the Admin panel.
 
+### Timezone setting
+
+In **Admin Panel → Settings**, choose the appropriate IANA timezone, for example
+`Europe/London (GMT/BST)`. The application stores attendance timestamps in UTC and
+automatically applies the selected timezone's daylight-saving rules for business dates
+and late-arrival calculations. After upgrading an existing installation, select and save
+the timezone manually; old fixed UTC offsets are retained only for compatibility.
+
 ### 5.2 Network Configuration
 
 For multi-device deployments (e.g., kiosk on one machine, server on another):

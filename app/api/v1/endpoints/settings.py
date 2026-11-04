@@ -36,6 +36,7 @@ async def _get_or_create_settings(db: AsyncSession) -> AttendanceSettings:
             allowed_absent=5,
             allowed_leave=10,
             allowed_half_day=5,
+            timezone_name=None,
             timezone_offset="+05:00",
         )
         db.add(settings)

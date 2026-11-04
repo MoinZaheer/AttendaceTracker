@@ -76,15 +76,22 @@ def _safe_csv_cell(value: object) -> str:
     return text
 
 
-async def _get_timezone_offset(db: AsyncSession) -> str:
+async def _get_timezone_value(db: AsyncSession) -> str:
     """
     Resolve the business timezone offset from attendance settings.
     Falls back to +05:00 when settings are not initialized.
     """
     try:
-        result = await db.execute(select(AttendanceSettings.timezone_offset).limit(1))
-        offset = result.scalar_one_or_none()
-        return offset or "+05:00"
+        result = await db.execute(
+            select(
+                AttendanceSettings.timezone_name,
+                AttendanceSettings.timezone_offset,
+            ).limit(1)
+        )
+        row = result.one_or_none()
+        if row:
+            return row.timezone_name or row.timezone_offset
+        return "+05:00"
     except Exception:  # noqa: BLE001
         return "+05:00"
 
@@ -139,8 +146,8 @@ async def attendance_today(
     db: AsyncSession = Depends(get_db),
 ) -> list[AttendanceFeedItem]:
     """Return today's attendance events for the kiosk live feed."""
-    tz_offset = await _get_timezone_offset(db)
-    today_str = business_date_str(tz_offset, utc_now())
+    tz_value = await _get_timezone_value(db)
+    today_str = business_date_str(tz_value, utc_now())
     result = await db.execute(
         select(Attendance, Employee.name)
         .join(Employee, Attendance.employee_id == Employee.id)
@@ -343,8 +350,8 @@ async def analytics_trends(
     _user: User = Depends(get_current_active_user),
 ) -> TrendsResponse:
     """Return attendance trends over the last N days."""
-    tz_offset = await _get_timezone_offset(db)
-    today_local = parse_iso_date(business_date_str(tz_offset, utc_now()))
+    tz_value = await _get_timezone_value(db)
+    today_local = parse_iso_date(business_date_str(tz_value, utc_now()))
     start = (today_local - timedelta(days=days)).isoformat()
 
     result = await db.execute(
@@ -384,8 +391,8 @@ async def employee_analytics(
     if employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    tz_offset = await _get_timezone_offset(db)
-    today = parse_iso_date(business_date_str(tz_offset, utc_now()))
+    tz_value = await _get_timezone_value(db)
+    today = parse_iso_date(business_date_str(tz_value, utc_now()))
     start = (today - timedelta(days=30)).isoformat()
 
     result = await db.execute(
@@ -458,8 +465,8 @@ async def system_status(
     _user: User = Depends(get_current_active_user),
 ) -> StatusResponse:
     """Return current system status — employee count and today's scans."""
-    tz_offset = await _get_timezone_offset(db)
-    today_str = business_date_str(tz_offset, utc_now())
+    tz_value = await _get_timezone_value(db)
+    today_str = business_date_str(tz_value, utc_now())
 
     emp_count = await db.execute(
         select(func.count(Employee.id)).where(Employee.is_active.is_(True))
@@ -522,8 +529,8 @@ async def absence_report(
             working_days.append(d)
 
     # Only include working days up to today's business date
-    tz_offset = await _get_timezone_offset(db)
-    today = parse_iso_date(business_date_str(tz_offset, utc_now()))
+    tz_value = await _get_timezone_value(db)
+    today = parse_iso_date(business_date_str(tz_value, utc_now()))
     working_days = [d for d in working_days if d <= today]
     total_working_days = len(working_days)
 
@@ -718,18 +725,18 @@ async def live_stats(
     # Read attendance settings for local business-day and late calculations.
     work_start = "09:00"
     grace_minutes = 15
-    tz_offset = "+05:00"
+    tz_value = "+05:00"
     try:
         settings_result = await db.execute(select(AttendanceSettings).limit(1))
         att_settings = settings_result.scalar_one_or_none()
         if att_settings:
             work_start = att_settings.work_start
             grace_minutes = att_settings.grace_minutes
-            tz_offset = att_settings.timezone_offset
+            tz_value = att_settings.timezone_name or att_settings.timezone_offset
     except Exception as exc:  # noqa: BLE001
         logger.warning("Could not load attendance settings for live-stats: %s", exc)
 
-    today_str = business_date_str(tz_offset, utc_now())
+    today_str = business_date_str(tz_value, utc_now())
 
     # Total active employees
     emp_result = await db.execute(
@@ -773,7 +780,7 @@ async def live_stats(
                 scan_timestamp=ensure_utc(first_in.timestamp),
                 work_start=work_start,
                 grace_minutes=grace_minutes,
-                timezone_offset=tz_offset,
+                timezone_offset=tz_value,
             ):
                 late += 1
             else:
@@ -1007,8 +1014,8 @@ async def employee_absence_detail(
         if d.weekday() < 5:
             working_days.append(d)
 
-    tz_offset = await _get_timezone_offset(db)
-    today = parse_iso_date(business_date_str(tz_offset, utc_now()))
+    tz_value = await _get_timezone_value(db)
+    today = parse_iso_date(business_date_str(tz_value, utc_now()))
     working_days = [d for d in working_days if d <= today]
     total_working = len(working_days)
 

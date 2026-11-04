@@ -83,17 +83,17 @@ async def scan_card(
     Returns enriched response with today's hours, last event, and late status.
     """
     att_settings: AttendanceSettings | None = None
-    tz_offset = "+05:00"
+    tz_value = "+05:00"
     try:
         settings_result = await db.execute(select(AttendanceSettings).limit(1))
         att_settings = settings_result.scalar_one_or_none()
         if att_settings and att_settings.timezone_offset:
-            tz_offset = att_settings.timezone_offset
+            tz_value = att_settings.timezone_name or att_settings.timezone_offset
     except Exception as exc:  # noqa: BLE001
         logger.warning("Unable to load attendance settings before scan: %s", exc)
 
     now = utc_now()
-    today_str = business_date_str(tz_offset, now)
+    today_str = business_date_str(tz_value, now)
 
     # Find or auto-register employee
     result = await db.execute(select(Employee).where(Employee.rfid_uid == body.uid))
@@ -180,7 +180,7 @@ async def scan_card(
                 all_today,
                 att_settings.work_start,
                 att_settings.grace_minutes,
-                att_settings.timezone_offset,
+                att_settings.timezone_name or att_settings.timezone_offset,
             )
     except Exception as e:
         logger.warning("Could not check late status: %s", e)
@@ -207,12 +207,12 @@ async def _record_break_event(uid: str, event_type: str, db: AsyncSession) -> Br
     if employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    tz_offset = "+05:00"
+    tz_value = "+05:00"
     try:
         settings_result = await db.execute(select(AttendanceSettings).limit(1))
         att_settings = settings_result.scalar_one_or_none()
         if att_settings and att_settings.timezone_offset:
-            tz_offset = att_settings.timezone_offset
+            tz_value = att_settings.timezone_name or att_settings.timezone_offset
     except Exception as exc:  # noqa: BLE001
         logger.warning("Unable to load settings for break event: %s", exc)
 
@@ -222,7 +222,7 @@ async def _record_break_event(uid: str, event_type: str, db: AsyncSession) -> Br
         rfid_uid=uid,
         event_type=event_type,
         timestamp=now,
-        date=business_date_str(tz_offset, now),
+        date=business_date_str(tz_value, now),
     )
     db.add(attendance)
     await db.commit()

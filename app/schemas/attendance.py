@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -218,6 +219,7 @@ class AttendanceSettingsRead(BaseModel):
     allowed_absent: int
     allowed_leave: int
     allowed_half_day: int
+    timezone_name: str | None
     timezone_offset: str
 
     model_config = {"from_attributes": True}
@@ -230,6 +232,7 @@ class AttendanceSettingsUpdate(BaseModel):
     allowed_absent: int | None = None
     allowed_leave: int | None = None
     allowed_half_day: int | None = None
+    timezone_name: str | None = None
     timezone_offset: str | None = None
 
     @field_validator("work_start", "work_end")
@@ -250,6 +253,18 @@ class AttendanceSettingsUpdate(BaseModel):
         value = v.strip()
         if not _TZ_OFFSET_RE.match(value):
             raise ValueError("Timezone offset must be in ±HH:MM format")
+        return value
+
+    @field_validator("timezone_name")
+    @classmethod
+    def _validate_tz_name(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        value = v.strip()
+        try:
+            ZoneInfo(value)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError("Timezone must be a valid IANA timezone name") from exc
         return value
 
     @field_validator("grace_minutes", "allowed_absent", "allowed_leave", "allowed_half_day")

@@ -221,39 +221,32 @@
                 </div>
 
                 <div class="setting-group">
-                    <label for="tzOffset">Timezone Offset</label>
-                    <select id="tzOffset">
-                        <option value="-12:00">UTC-12:00</option>
-                        <option value="-11:00">UTC-11:00</option>
-                        <option value="-10:00">UTC-10:00</option>
-                        <option value="-09:00">UTC-09:00</option>
-                        <option value="-08:00">UTC-08:00 (PST)</option>
-                        <option value="-07:00">UTC-07:00 (MST)</option>
-                        <option value="-06:00">UTC-06:00 (CST)</option>
-                        <option value="-05:00">UTC-05:00 (EST)</option>
-                        <option value="-04:00">UTC-04:00</option>
-                        <option value="-03:00">UTC-03:00</option>
-                        <option value="-02:00">UTC-02:00</option>
-                        <option value="-01:00">UTC-01:00</option>
-                        <option value="+00:00">UTC±00:00 (GMT)</option>
-                        <option value="+01:00">UTC+01:00 (CET)</option>
-                        <option value="+02:00">UTC+02:00</option>
-                        <option value="+03:00">UTC+03:00</option>
-                        <option value="+04:00">UTC+04:00</option>
-                        <option value="+04:30">UTC+04:30</option>
-                        <option value="+05:00" selected>UTC+05:00 (PKT)</option>
-                        <option value="+05:30">UTC+05:30 (IST)</option>
-                        <option value="+05:45">UTC+05:45</option>
-                        <option value="+06:00">UTC+06:00</option>
-                        <option value="+07:00">UTC+07:00</option>
-                        <option value="+08:00">UTC+08:00 (CST)</option>
-                        <option value="+09:00">UTC+09:00 (JST)</option>
-                        <option value="+09:30">UTC+09:30</option>
-                        <option value="+10:00">UTC+10:00 (AEST)</option>
-                        <option value="+11:00">UTC+11:00</option>
-                        <option value="+12:00">UTC+12:00 (NZST)</option>
+                    <label for="tzName">Timezone</label>
+                    <select id="tzName">
+                        <option value="">Select a timezone</option>
+                        <option value="UTC">UTC</option>
+                        <option value="Europe/London">Europe/London (GMT/BST)</option>
+                        <option value="Europe/Dublin">Europe/Dublin (GMT/IST)</option>
+                        <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                        <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                        <option value="Europe/Madrid">Europe/Madrid (CET/CEST)</option>
+                        <option value="Europe/Rome">Europe/Rome (CET/CEST)</option>
+                        <option value="Europe/Athens">Europe/Athens (EET/EEST)</option>
+                        <option value="America/New_York">America/New_York (EST/EDT)</option>
+                        <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                        <option value="America/Denver">America/Denver (MST/MDT)</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                        <option value="America/Toronto">America/Toronto (EST/EDT)</option>
+                        <option value="America/Sao_Paulo">America/Sao_Paulo</option>
+                        <option value="Asia/Karachi">Asia/Karachi (PKT)</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                        <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                        <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                        <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
+                        <option value="Pacific/Auckland">Pacific/Auckland (NZST/NZDT)</option>
                     </select>
-                    <div class="setting-description">Your local timezone for accurate time calculations</div>
+                    <div class="setting-description">Choose an IANA timezone; daylight saving changes are applied automatically.</div>
                 </div>
 
                 <div class="save-message" id="saveMsg"></div>
@@ -299,13 +292,15 @@
                     document.getElementById('allowedAbsent').value = data.allowed_absent ?? 5;
                     document.getElementById('allowedLeave').value = data.allowed_leave ?? 10;
                     document.getElementById('allowedHalfDay').value = data.allowed_half_day ?? 5;
-                    document.getElementById('tzOffset').value = data.timezone_offset || '+05:00';
+                    document.getElementById('tzName').value = data.timezone_name || '';
 
                     // Update current rules display
                     document.getElementById('currentStart').textContent = data.work_start || '09:00';
                     document.getElementById('currentEnd').textContent = data.work_end || '17:00';
                     document.getElementById('currentGrace').textContent = `${data.grace_minutes ?? 15} min`;
-                    document.getElementById('currentTz').textContent = `UTC${data.timezone_offset || '+05:00'}`;
+                    document.getElementById('currentTz').textContent = data.timezone_name
+                        ? data.timezone_name
+                        : `Legacy fixed offset ${data.timezone_offset || '+05:00'} — select a timezone`;
                     document.getElementById('currentAbsences').textContent = `${data.allowed_absent ?? 5} days`;
                     document.getElementById('currentLeaves').textContent = `${data.allowed_leave ?? 10} days`;
                     document.getElementById('currentHalfDays').textContent = `${data.allowed_half_day ?? 5} days`;
@@ -331,8 +326,12 @@
                     allowed_absent: parseInt(document.getElementById('allowedAbsent').value) || 5,
                     allowed_leave: parseInt(document.getElementById('allowedLeave').value) || 10,
                     allowed_half_day: parseInt(document.getElementById('allowedHalfDay').value) || 5,
-                    timezone_offset: document.getElementById('tzOffset').value,
+                    timezone_name: document.getElementById('tzName').value || null,
                 };
+
+                if (!body.timezone_name) {
+                    throw new Error('Please select a timezone before saving');
+                }
 
                 const res = await AUTH.fetch(`${API_BASE}/api/v1/settings`, {
                     method: 'PUT',

@@ -200,7 +200,8 @@ erDiagram
         time work_start "e.g. 09:00"
         time work_end "e.g. 17:00"
         int grace_minutes "e.g. 15"
-        int timezone_offset "e.g. 5"
+        string timezone_name "e.g. Europe/London"
+        string timezone_offset "legacy compatibility"
     }
 
     EMPLOYEES ||--o{ ATTENDANCE_EVENTS : "has many"

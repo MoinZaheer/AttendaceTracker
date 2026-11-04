@@ -180,7 +180,7 @@ Common issues and their solutions, organized by category.
 
 **Solutions:**
 1. Verify the date range has attendance data
-2. Check timezone settings (Settings → Timezone Offset)
+2. Check timezone settings (Settings → Timezone)
 3. Ensure employees have `is_active = true`
 4. Try a date you know has scans
 </details>

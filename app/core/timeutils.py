@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _TZ_OFFSET_RE = re.compile(r"^[+-](?:0\d|1\d|2[0-3]):[0-5]\d$")
 
@@ -22,6 +23,16 @@ def parse_timezone_offset(offset: str) -> timezone:
     return timezone(delta)
 
 
+def parse_timezone(value: str) -> tzinfo:
+    """Parse an IANA timezone name or a legacy fixed UTC offset."""
+    if _TZ_OFFSET_RE.match(value):
+        return parse_timezone_offset(value)
+    try:
+        return ZoneInfo(value)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"Unknown timezone: {value}") from exc
+
+
 def ensure_utc(dt: datetime | None) -> datetime:
     if dt is None:
         return datetime.now(timezone.utc)
@@ -35,12 +46,12 @@ def utc_now() -> datetime:
 
 
 def local_now(offset: str) -> datetime:
-    return utc_now().astimezone(parse_timezone_offset(offset))
+    return utc_now().astimezone(parse_timezone(offset))
 
 
 def business_date_str(offset: str, base_utc: datetime | None = None) -> str:
     base = ensure_utc(base_utc)
-    local = base.astimezone(parse_timezone_offset(offset))
+    local = base.astimezone(parse_timezone(offset))
     return local.date().isoformat()
 
 
@@ -57,7 +68,7 @@ def is_late_arrival(
 ) -> bool:
     """Return True when first IN is after work_start + grace in local timezone."""
     scan_local = ensure_utc(scan_timestamp).astimezone(
-        parse_timezone_offset(timezone_offset)
+        parse_timezone(timezone_offset)
     )
     hour_str, minute_str = work_start.split(":")
     cutoff = scan_local.replace(

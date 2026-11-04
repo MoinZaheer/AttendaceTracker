@@ -83,7 +83,9 @@ These are configured via the **Admin Panel → Settings** page (not environment 
 | Work Start | `09:00` | Expected start of work day |
 | Work End | `17:00` | Expected end of work day |
 | Grace Period | `15 min` | Minutes after work start before marked "late" |
-| Timezone Offset | `5` | UTC offset in hours (e.g., `5` for PKT) |
+| Timezone | *(select in Admin Settings)* | IANA timezone name, such as `Europe/London`; daylight saving changes are automatic |
+
+Existing installations may temporarily show a legacy fixed offset. Select and save the correct IANA timezone after upgrading; offsets are retained only as a rolling-deployment fallback.
 
 ---
 

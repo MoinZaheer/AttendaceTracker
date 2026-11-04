@@ -313,6 +313,13 @@ All engineering audit outputs are organized under `docs/audit/` using lowercase 
 
 > ⚠️ Copy `.env.example` to `.env` and fill in production values. Never commit `.env` to git.
 
+### Timezone configuration
+
+Set the attendance timezone in **Admin Panel → Settings** using an IANA timezone name,
+such as `Europe/London`. IANA zones apply daylight-saving rules automatically, so the UK
+uses GMT in winter and BST in summer. Existing installations with a legacy fixed UTC offset
+must have an administrator select and save the correct timezone after upgrading.
+
 ---
 
 ## 🔐 Security
