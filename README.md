@@ -114,7 +114,14 @@ Login with the credentials from `FIRST_ADMIN_EMAIL` / `FIRST_ADMIN_PASSWORD` in 
 
 ### Windows Quick Start
 
-Double-click `run_docker.bat` for Docker deployment, or `run_app.bat` for local SQLite development.
+For PowerShell, copy the environment template using the exact `.env` filename:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+```
+
+Alternatively, double-click `run_docker.bat` for Docker deployment, or `run_app.bat` for local SQLite development.
 
 ---
 
