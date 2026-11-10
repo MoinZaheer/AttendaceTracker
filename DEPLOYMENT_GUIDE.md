@@ -25,7 +25,7 @@
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
 | **Production Server** | 2 CPU, 4 GB RAM, 50 GB SSD | 4 CPU, 8 GB RAM, 100 GB SSD |
-| **RFID Readers** | Any USB HID keyboard-emulation reader | ACR122U, RD200, or equivalent |
+| **RFID Readers** | Any USB HID keyboard-emulation reader | RD200 or equivalent; ACR122U requires the optional PC/SC bridge |
 | **Kiosk Terminal** | Any device with a modern browser | Dedicated tablet/touchscreen + USB reader |
 
 > [!NOTE]

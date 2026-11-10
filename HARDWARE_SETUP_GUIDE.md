@@ -61,12 +61,12 @@ Any USB RFID reader that operates in **HID keyboard-emulation mode** will work. 
 - ✅ Send Enter/Return after the UID
 - ✅ Work without installing proprietary drivers
 
-**Recommended readers:**
+**Recommended readers for this application:**
 
 | Reader | Frequency | Card Type | Price (INR) | Price (USD) | Best For |
 |--------|-----------|-----------|-------------|-------------|----------|
 | Generic EM4100 USB | 125 kHz | EM4100 / TK4100 | ₹300–₹600 | $5–$10 | Budget setups, small offices |
-| ACR122U | 13.56 MHz | MIFARE Classic, NFC | ₹1,500–₹2,500 | $20–$35 | Higher security, NFC phones |
+| ACR122U | 13.56 MHz | MIFARE Classic, NFC | ₹1,500–₹2,500 | $20–$35 | PC/SC applications (not this HID flow) |
 | RD200-LF | 125 kHz | EM4100 | ₹500–₹1,000 | $8–$15 | Indian market standard |
 | HF-ICR | 13.56 MHz | MIFARE, DESFire | ₹2,000–₹4,000 | $25–$50 | Enterprise / card cloning prevention |
 
@@ -76,6 +76,17 @@ Any USB RFID reader that operates in **HID keyboard-emulation mode** will work. 
 
 > [!TIP]
 > **Start with the cheapest EM4100 USB reader** (~₹400 / ~$6). It works out of the box with no configuration. Upgrade to 13.56 MHz readers only if you need anti-cloning security.
+
+> [!IMPORTANT]
+> The ACR122U is a PC/SC smart-card/NFC reader, not a USB keyboard-emulation reader.
+> Windows may detect it as **ACS ACR122U PICC Interface**, and its LED may flash when a
+> card is present, but it will not type the UID into Notepad. The current kiosk frontend
+> supports HID readers only. Use an HID reader for this application, or add a separate
+> PC/SC integration layer; installing the ACR122U driver alone will not make it type.
+
+> [!NOTE]
+> This project includes an optional Windows PC/SC bridge for the ACR122U. It reads the
+> card UID locally and lets the kiosk use it without keyboard emulation.
 
 ### 2. RFID Cards / Tags
 
@@ -226,7 +237,7 @@ The server runs the backend (FastAPI + PostgreSQL + Redis + Nginx). Options:
 
 ### Step 1: Verify the RFID Reader Works
 
-1. **Plug the USB RFID reader** into any computer (no driver installation needed)
+1. **Plug a USB HID RFID reader** into any computer (no driver installation needed)
 2. **Open a text editor** (Notepad on Windows, TextEdit on Mac, gedit on Linux)
 3. **Click inside the text editor** so it has keyboard focus
 4. **Tap an RFID card** on the reader
@@ -245,6 +256,11 @@ If you see text appear → **the reader works correctly** ✅
 > - Try a different USB port
 > - Make sure you're tapping a compatible card (125 kHz card with 125 kHz reader)
 > - On Linux, check `dmesg | tail` for USB device detection
+
+> [!NOTE]
+> This Notepad test applies only to HID keyboard-emulation readers. For an ACR122U,
+> a successful LED flash and a Windows smart-card device entry confirm USB/PC/SC
+> detection, but they do not produce keyboard text.
 
 ### Step 2: Start the Server
 
@@ -266,6 +282,22 @@ docker compose up -d --build
 docker compose ps              # all containers should be "healthy"
 curl http://localhost/api/v1/health   # should return {"db": true, "redis": true}
 ```
+
+### ACR122U Setup (Windows)
+
+The bridge must run on the same Windows computer as the reader and browser. Docker
+does not need USB access.
+
+1. Keep the ACR122U connected and confirm Windows shows **ACS ACR122U PICC Interface**.
+2. Double-click `run_acr122u_bridge.bat` from the project folder.
+3. Keep that terminal open. The first run creates a local virtual environment and
+   installs `pyscard`.
+4. Open the kiosk at `http://localhost` or the employee registration page.
+5. Click **Tap to Scan**, then place the card on the reader.
+
+The bridge listens only on `127.0.0.1:8765`. Test it in a browser with
+`http://127.0.0.1:8765/uid`: it should return `{"uid": null}` without a card and a
+hex UID such as `{"uid": "04A1B2C3D4E5"}` while a card is present.
 
 ### Step 3: Open the Kiosk Page
 
@@ -441,6 +473,7 @@ All formats are accepted as long as they use only alphanumeric characters, colon
 | UID appears in Notepad but not in kiosk | Wrong browser tab is active | Switch to the kiosk tab and click on it |
 | Card works on one reader but not another | Frequency mismatch | Ensure card frequency (125 kHz or 13.56 MHz) matches the reader |
 | Double scan / bouncing | Card held too long | The system has anti-bounce protection (`BOUNCE_WINDOW_SECONDS=2`); just tap and remove |
+| ACR122U LED flashes but no text appears | ACR122U uses PC/SC, not HID keyboard emulation | Use a USB HID reader, or implement a PC/SC service that reads the UID and submits it to the API |
 
 ### Kiosk Issues
 

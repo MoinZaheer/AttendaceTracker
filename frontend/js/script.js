@@ -74,6 +74,8 @@ class ProfessionalKiosk {
 
         // Global key buffer for hardware scanners
         document.addEventListener('keydown', this.handleGlobalKeydown.bind(this));
+        this.pcscReader = new PcscReader();
+        this.pcscReader.start((uid) => this.processScan(uid, 'acr122u'));
 
         // Initial data load
         this.loadToday();

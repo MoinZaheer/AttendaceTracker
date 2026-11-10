@@ -77,6 +77,7 @@
   <script src="js/auth.js"></script>
   <script src="js/layout.js?v=7"></script>
   <script src="js/toast.js"></script>
+  <script src="js/pcsc-reader.js"></script>
   <script>
     Layout.init({
       active: 'register',
@@ -105,11 +106,20 @@
     const register = document.getElementById('register');
     const status = document.getElementById('status');
     const messageArea = document.getElementById('messageArea');
+    const pcscReader = new PcscReader();
 
     scanBtn.addEventListener('click', () => {
       rfid.value = '';
       rfid.focus();
       status.textContent = 'Waiting for card...';
+      pcscReader.start((uid) => {
+        rfid.value = uid;
+        status.textContent = 'UID captured';
+        if (!name.value) name.value = `Employee ${uid.slice(-4)}`;
+        pcscReader.stop();
+      }, () => {
+        status.textContent = 'Bridge unavailable; start the ACR122U bridge first';
+      });
     });
 
     rfid.addEventListener('keydown', (e) => {
