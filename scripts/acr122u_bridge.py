@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from smartcard.Exceptions import NoCardException, NoReadersException
+from smartcard.Exceptions import (
+    CardConnectionException,
+    NoCardException,
+    NoReadersException,
+)
 from smartcard.System import readers
 
 HOST = "127.0.0.1"
@@ -18,16 +22,28 @@ def read_uid() -> str | None:
     if not available_readers:
         raise NoReadersException("No PC/SC smart-card reader found")
 
-    connection = available_readers[0].createConnection()
-    try:
-        connection.connect()
-        data, sw1, sw2 = connection.transmit(GET_UID_APDU)
-    except NoCardException:
-        return None
+    for _attempt in range(2):
+        connection = available_readers[0].createConnection()
+        try:
+            connection.connect()
+            data, sw1, sw2 = connection.transmit(GET_UID_APDU)
+        except NoCardException:
+            return None
+        except CardConnectionException as exc:
+            if "0x80100068" not in str(exc) or _attempt == 1:
+                raise
+            continue
+        finally:
+            try:
+                connection.disconnect()
+            except CardConnectionException:
+                pass
 
-    if (sw1, sw2) != (0x90, 0x00):
-        raise RuntimeError(f"Reader returned status {sw1:02X}{sw2:02X}")
-    return "".join(f"{byte:02X}" for byte in data)
+        if (sw1, sw2) != (0x90, 0x00):
+            raise RuntimeError(f"Reader returned status {sw1:02X}{sw2:02X}")
+        return "".join(f"{byte:02X}" for byte in data)
+
+    return None
 
 
 class BridgeHandler(BaseHTTPRequestHandler):
@@ -40,7 +56,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
             uid = read_uid()
             payload = {"uid": uid}
             status = 200
-        except (NoReadersException, RuntimeError) as exc:
+        except (CardConnectionException, NoReadersException, RuntimeError) as exc:
             payload = {"error": str(exc)}
             status = 503
 
