@@ -13,7 +13,6 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_active_user, get_db, require_admin
@@ -95,26 +94,16 @@ async def scan_card(
     now = utc_now()
     today_str = business_date_str(tz_value, now)
 
-    # Find or auto-register employee
+    # Cards must be registered by an administrator before they can be used.
     result = await db.execute(select(Employee).where(Employee.rfid_uid == body.uid))
     employee = result.scalar_one_or_none()
 
     if employee is None:
-        try:
-            employee = Employee(
-                name=f"Employee-{body.uid[:8]}",
-                rfid_uid=body.uid,
-                department="Unassigned",
-            )
-            db.add(employee)
-            await db.commit()
-            await db.refresh(employee)
-            logger.info("Auto-registered employee %s (UID %s)", employee.name, body.uid)
-        except IntegrityError:
-            await db.rollback()
-            result = await db.execute(select(Employee).where(Employee.rfid_uid == body.uid))
-            employee = result.scalar_one()
-            logger.info("Race condition handled for UID %s", body.uid)
+        logger.warning("Rejected unregistered RFID UID %s", body.uid)
+        raise HTTPException(
+            status_code=404,
+            detail="RFID card is not registered. Ask an administrator to register it.",
+        )
 
     if not employee.is_active:
         raise HTTPException(status_code=403, detail="Employee account is deactivated")

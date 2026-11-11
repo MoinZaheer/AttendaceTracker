@@ -315,7 +315,7 @@ On the kiosk device (the computer/tablet at the entrance):
 1. **Make sure the browser tab is in focus** (click on it)
 2. **Tap an RFID card** on the USB reader
 3. **Expected:** The kiosk shows:
-   - "Welcome, Employee-0012345678" (auto-registered with the card UID)
+   - A registered employee's name
    - Event: **IN**
    - A success animation plays
 4. **Tap the same card again:**
@@ -331,6 +331,7 @@ On the kiosk device (the computer/tablet at the entrance):
    - Or tap "Scan Card" and hold the card near the reader
 4. Submit → The employee is now linked to that card
 5. Next time they scan, the kiosk will show their **real name** instead of "Employee-XXXX"
+   Cards must be registered before staff can use them; unknown cards are rejected.
 
 ---
 
@@ -473,7 +474,7 @@ All formats are accepted as long as they use only alphanumeric characters, colon
 | UID appears in Notepad but not in kiosk | Wrong browser tab is active | Switch to the kiosk tab and click on it |
 | Card works on one reader but not another | Frequency mismatch | Ensure card frequency (125 kHz or 13.56 MHz) matches the reader |
 | Double scan / bouncing | Card held too long | The system has anti-bounce protection (`BOUNCE_WINDOW_SECONDS=2`); just tap and remove |
-| ACR122U LED flashes but no text appears | ACR122U uses PC/SC, not HID keyboard emulation | Use a USB HID reader, or implement a PC/SC service that reads the UID and submits it to the API |
+| ACR122U LED flashes but no text appears | ACR122U uses PC/SC, not HID keyboard emulation | Start `run_acr122u_bridge.bat`, keep it running, and use the kiosk or registration page |
 
 ### Kiosk Issues
 

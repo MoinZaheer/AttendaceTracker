@@ -51,6 +51,7 @@ async def test_omega_start_scan_fuzz(async_client: AsyncClient):
             400,
             422,
             403,
+            404,
         ], f"CRITICAL: 500 Error on payload: {uid}"
 
 
@@ -67,7 +68,7 @@ async def test_omega_auth_fuzz(async_client: AsyncClient):
             data={"username": email, "password": password},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert resp.status_code in [401, 400, 422], f"Login crashed with {email}"
+        assert resp.status_code in [401, 400, 422, 429], f"Login crashed with {email}"
 
 
 @pytest.mark.asyncio

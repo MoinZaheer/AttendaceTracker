@@ -75,7 +75,7 @@ docker compose ps
 
 # Test the API
 curl http://localhost/api/v1/health
-# → {"status": "healthy", "database": "ok", "redis": "ok"}
+# → {"db": true, "redis": true}
 ```
 
 ### Access

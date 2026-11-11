@@ -6,8 +6,6 @@ Verifies:
 2. Auth Hardening (HttpOnly Cookies)
 """
 
-import asyncio  # noqa: F401 — used by event_loop fixture
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,14 +14,6 @@ from app.core.security import create_access_token
 from app.main import app  # noqa: F401 — used by ASGITransport fixture
 from app.models.employee import Employee
 from app.models.user import User
-
-
-# Use the same event loop for all async tests to avoid scope issues
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.mark.asyncio

@@ -12,17 +12,11 @@ from app.models.employee import Attendance
 
 
 @pytest.mark.asyncio
-async def test_scan_auto_registers_unknown_uid(async_client: AsyncClient):
-    """Scanning an unknown UID should auto-register and clock IN."""
+async def test_scan_rejects_unknown_uid(async_client: AsyncClient):
+    """Scanning an unknown UID should require administrator registration."""
     resp = await async_client.post("/api/v1/scan", json={"uid": "TEST-0001"})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["success"] is True
-    assert data["event"] == "IN"
-    assert data["uid"] == "TEST-0001"
-    assert data["name"].startswith("Employee")
-    assert "attendance_id" in data
-    assert "attendance_timestamp" in data
+    assert resp.status_code == 404
+    assert "not registered" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -32,6 +26,9 @@ async def test_scan_toggles_in_out(async_client: AsyncClient):
 
     from app.core.config import settings
 
+    await async_client.post(
+        "/api/v1/employees", json={"name": "Toggle Tester", "rfid_uid": "TEST-0002"}
+    )
     with patch.object(settings, "BOUNCE_WINDOW_SECONDS", 0.0):
         # First scan → IN
         r1 = await async_client.post("/api/v1/scan", json={"uid": "TEST-0002"})
@@ -97,6 +94,9 @@ async def test_scan_uses_business_timezone_for_attendance_date(
     )
     db_session.add(settings_row)
     await db_session.commit()
+    await async_client.post(
+        "/api/v1/employees", json={"name": "Timezone Tester", "rfid_uid": "TZ-EDGE-01"}
+    )
 
     from app.api.v1.endpoints import employees as employees_endpoint
 

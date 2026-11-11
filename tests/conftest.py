@@ -4,7 +4,6 @@ Shared test fixtures for the RFID Attendance System test suite.
 Refactored for Async Support (aiosqlite + AsyncSession).
 """
 
-import asyncio
 import os
 import sys
 from typing import AsyncGenerator
@@ -55,17 +54,10 @@ TestingSessionLocal = async_sessionmaker(
 # With async, we do this in an async fixture.
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for each test session."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True)
 async def setup_db():
     """Create all tables before usage and drop after."""
+    limiter.reset()
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -99,6 +91,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 from app.api.v1.deps import get_current_active_user, require_admin
+from app.api.v1.endpoints.auth import limiter
 
 # ── Auth Overrides ──────────────────────────────────────────────────
 from app.models.user import User

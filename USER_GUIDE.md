@@ -272,7 +272,7 @@ For multi-device deployments (e.g., kiosk on one machine, server on another):
 2. The main screen shows a **large RFID input field** with a glowing indicator.
 3. **Employee taps their RFID card** on the reader.
 4. The system instantly:
-   - Auto-registers unknown UIDs as new employees.
+   - Rejects unknown UIDs until an administrator registers the card.
    - Toggles between **IN** and **OUT** for known employees.
    - Displays a confirmation (green = IN, red = OUT) with the employee's name.
 5. The dashboard resets after a few seconds, ready for the next scan.

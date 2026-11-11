@@ -9,13 +9,13 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-32%20Passed-brightgreen?logo=pytest&logoColor=white)](#testing)
+[![Tests](https://img.shields.io/badge/Tests-47%20Passed-brightgreen?logo=pytest&logoColor=white)](#testing)
 
 </div>
 
 ---
 
-Sentinel lets employees clock in and out by tapping RFID cards on a USB reader. The system auto-registers new cards, toggles IN/OUT state, tracks breaks, generates reports, and exports CSV — all behind JWT authentication with role-based access control.
+Sentinel lets employees clock in and out by tapping registered RFID cards on a USB reader. The system toggles IN/OUT state, tracks breaks, generates reports, and exports CSV — all behind JWT authentication with role-based access control.
 
 **One command to deploy. Plug in a $6 USB reader. Done.**
 
@@ -31,7 +31,7 @@ Sentinel lets employees clock in and out by tapping RFID cards on a USB reader. 
 | **Reports & Analytics** | Daily summary, monthly aggregation (weekday-aware), trends, CSV export |
 | **Admin Dashboard** | Employee CRUD, user management, real-time attendance feed |
 | **Security** | HttpOnly/SameSite cookies, bcrypt hashing, Pydantic validation, rate limiting |
-| **Auto-Registration** | Unknown cards are automatically registered on first scan |
+| **Card control** | Unknown cards are rejected until an administrator registers them |
 
 ---
 
@@ -149,7 +149,7 @@ All endpoints are prefixed with `/api/v1`. Interactive docs at `/docs`.
 | GET | `/employees` | User | List all employees (paginated) |
 | POST | `/employees` | Admin | Create employee |
 | PUT | `/employees/{id}` | Admin | Update employee |
-| DELETE | `/employees/{id}` | Admin | Soft-delete (preserves records) |
+| DELETE | `/employees/{id}` | Admin | Deactivate employee, preserve records, release card |
 
 ### Reports & Analytics
 | Method | Endpoint | Auth | Description |
@@ -351,7 +351,7 @@ Tests are organized by endpoint domain and security behavior:
 
 | File | Tests | Coverage |
 |------|-------|----------|
-| `test_scan.py` | 5 | RFID scan, auto-register, IN/OUT toggle, bounce protection |
+| `test_scan.py` | 5 | RFID scan, registration requirement, IN/OUT toggle, bounce protection |
 | `test_employees.py` | 8 | CRUD operations, validation, soft-delete |
 | `test_breaks.py` | 5 | Break start/end, error handling |
 | `test_reports.py` | 9 | Daily/monthly reports, CSV export, analytics |
@@ -364,7 +364,7 @@ Tests are organized by endpoint domain and security behavior:
 
 **You need 2 things:** a USB RFID reader (~$6) and matching RFID cards (~$0.10/card).
 
-The reader operates in USB HID keyboard-emulation mode — no drivers, no SDK. Plug it in, open the browser, tap a card.
+USB HID readers work without drivers. The ACR122U is supported through the optional local PC/SC bridge described in the hardware guide.
 
 → **Full hardware guide:** [HARDWARE_SETUP_GUIDE.md](HARDWARE_SETUP_GUIDE.md)
 
