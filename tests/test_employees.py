@@ -96,7 +96,7 @@ async def test_update_employee(async_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_employee_soft(async_client: AsyncClient):
-    """DELETE /employees/{id} should soft-delete (deactivate)."""
+    """DELETE /employees/{id} should deactivate and release the card."""
     create = await async_client.post(
         "/api/v1/employees", json={"name": "Del Me", "rfid_uid": "DEL-001"}
     )
@@ -109,3 +109,8 @@ async def test_delete_employee_soft(async_client: AsyncClient):
     listed = await async_client.get("/api/v1/employees")
     uids = [e["rfid_uid"] for e in listed.json()]
     assert "DEL-001" not in uids
+
+    replacement = await async_client.post(
+        "/api/v1/employees", json={"name": "Replacement", "rfid_uid": "DEL-001"}
+    )
+    assert replacement.status_code == 201

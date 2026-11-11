@@ -293,7 +293,7 @@ For multi-device deployments (e.g., kiosk on one machine, server on another):
 
 - **Add Employee:** Click "Add Employee" → Enter name and RFID UID.
 - **Edit Employee:** Click the edit icon → Modify name or UID.
-- **Delete Employee:** Click delete → Soft-delete (data preserved for reporting).
+- **Delete Employee:** Click delete → Deactivate the employee (attendance history is preserved and the card is released for reassignment).
 - **Auto-Registration:** New RFID cards are automatically registered on first scan with UID as a temporary name. Admins should rename them.
 
 ### 6.4 Reporting
@@ -337,7 +337,7 @@ All endpoints (except `/scan` and `/health`) require authentication via HttpOnly
 | `/employees` | POST | Admin | Create new employee |
 | `/employees/{id}` | GET | User | Get employee details |
 | `/employees/{id}` | PUT | Admin | Update employee |
-| `/employees/{id}` | DELETE | Admin | Soft-delete employee |
+| `/employees/{id}` | DELETE | Admin | Deactivate employee and release card |
 
 ### Break Endpoints
 

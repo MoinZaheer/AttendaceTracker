@@ -444,8 +444,8 @@ All kiosks share the same server, database, and employee records. An employee ca
 
 1. Go to Employee Management
 2. Find the employee → Click Delete
-3. This performs a **soft-delete** (sets `is_active = false`)
-4. The employee's card will be rejected with "Employee account is deactivated"
+3. This deactivates the employee and preserves their attendance history
+4. Their card is released and can be assigned to another employee
 5. All historical attendance records are preserved
 
 ### Card UID Format

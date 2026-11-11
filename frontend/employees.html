@@ -190,7 +190,7 @@
     });
 
     window.deleteEmployee = async function (id, name) {
-      if (!confirm(`Deactivate employee "${name}"? This is a soft delete.`)) return;
+      if (!confirm(`Deactivate employee "${name}"? Their attendance history will be preserved and their card will be released.`)) return;
       try {
         const res = await AUTH.fetch(`${API_BASE}/api/v1/employees/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Delete failed');

@@ -342,13 +342,25 @@ async def delete_employee(
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),
 ) -> DeleteResponse:
-    """Soft-delete (deactivate) an employee. Attendance history is preserved."""
+    """Deactivate an employee and release their card for reassignment."""
     result = await db.execute(select(Employee).where(Employee.id == employee_id))
     emp = result.scalar_one_or_none()
     if emp is None:
         raise HTTPException(status_code=404, detail="Employee not found")
 
+    original_uid = emp.rfid_uid
     emp.is_active = False
+    # Keep the historical UID on attendance rows, but free the unique card
+    # value so it can be assigned to another employee.
+    emp.rfid_uid = f"deleted-{employee_id}-{original_uid}"[:64]
     await db.commit()
-    logger.info("Soft-deleted employee %d (%s)", employee_id, emp.name)
-    return DeleteResponse(success=True, message=f"Employee '{emp.name}' deactivated")
+    logger.info(
+        "Soft-deleted employee %d (%s); released RFID UID %s",
+        employee_id,
+        emp.name,
+        original_uid,
+    )
+    return DeleteResponse(
+        success=True,
+        message=f"Employee '{emp.name}' deactivated and card released",
+    )
